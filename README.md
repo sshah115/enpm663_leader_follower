@@ -1,7 +1,7 @@
 # To Run Final Project:
-Terminal 1: ros2 launch final_project final_project.launch.py 
-Terminal 2: ros2 run navigation follower_navigator_interface.py
-Terminal 3: ros2 run navigation leader_navigator_interface.py
+ - Terminal 1: ros2 launch final_project final_project.launch.py 
+ - Terminal 2: ros2 run navigation follower_navigator_interface.py
+ - Terminal 3: ros2 run navigation leader_navigator_interface.py
 
 # Prerequisites for the Final Project
 
