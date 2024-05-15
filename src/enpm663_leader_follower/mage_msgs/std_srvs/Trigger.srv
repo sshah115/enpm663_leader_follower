@@ -1,0 +1,5 @@
+# Trigger.srv
+---
+# Response
+bool success # True if command was successful
+string message # message indicating success or error
