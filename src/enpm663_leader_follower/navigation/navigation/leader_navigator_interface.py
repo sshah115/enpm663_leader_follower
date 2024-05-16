@@ -41,7 +41,6 @@ class LeaderNavigationDemoInterface(Node):
             self.localize()
             self.follow_waypoints()
 
-        # subscriber to amcl_pose topic in a different ROS_DOMAIN_ID
         # Kept - Required to get accurate location of the leader robot
         self._amcl_pose_sub = self.create_subscription(
             PoseStamped,
@@ -50,13 +49,13 @@ class LeaderNavigationDemoInterface(Node):
             10
         )
 
-        # Added
-        # publisher to amcl_pose topic for trigger request
+        # Added- publisher to amcl_pose topic for trigger request
         self._amcl_pose_pub = self.create_publisher(
             PoseStamped,
-            "/leader_coordinates",
+            "/amcl_pose",
             10
         )
+
         # Asynchronous leader_location service
         self._leader_location_srv = self.create_service(Trigger, "leader_location", self.trigger_response)
 
