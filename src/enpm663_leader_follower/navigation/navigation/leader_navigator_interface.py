@@ -65,11 +65,7 @@ class LeaderNavigationDemoInterface(Node):
 
     # Added - Carissa
     def trigger_response(self,request,response):
-        # x y z ??? TODO need leader's current location in world map
-        # Modified - Don't think you need the pose_stamped version. Tagged for removal
-        #current_location = self.create_pose_stamped(self._position.x, self._position.y, z)
-
-        #PoseStamped format - Hoever according to the instruction it needs to publish the coordinates only.
+        # position.x and position.y
         self._amcl_pose_pub.publish(self._position) 
         response.success = True
         response.message = "Server Processed Client Request: Leader Location Trigger"
@@ -77,11 +73,7 @@ class LeaderNavigationDemoInterface(Node):
 
     # Added - For the amcl_pose subscription and publisher to work this is the dependency
     def amcl_pose_callback(self, msg):
-        # poistion includes (x, y, z). Access position.x
         self._position = msg.pose.pose.position
-        # Not sure whether the orientation and covariance are required
-        orientation = msg.pose.pose.orientation
-        covariance = msg.pose.covariance
         self.get_logger().info(f"Position: x={self._position.x}, y={self._position.y}")
 
 
