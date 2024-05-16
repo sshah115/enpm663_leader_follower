@@ -27,6 +27,9 @@ class LeaderNavigationDemoInterface(Node):
         self._leader_navigator = BasicNavigator(node_name, namespace)
         # Initial pose
         self._leader_initial_pose = PoseStamped()
+
+        # Added - current position
+        self._position = self._leader_initial_pose.pose.position
         
         # Task the leader robot should perform
         if self._task_param == "init":
@@ -38,10 +41,20 @@ class LeaderNavigationDemoInterface(Node):
             self.localize()
             self.follow_waypoints()
 
+        # subscriber to amcl_pose topic in a different ROS_DOMAIN_ID
+        # Kept - Required to get accurate location of the leader robot
+        self._amcl_pose_sub = self.create_subscription(
+            PoseStamped,
+            "/amcl_pose",
+            self.amcl_pose_callback,
+            10
+        )
+
+        # Added
         # publisher to amcl_pose topic for trigger request
         self._amcl_pose_pub = self.create_publisher(
             PoseStamped,
-            "/amcl_pose",
+            "/leader_coordinates",
             10
         )
         # Asynchronous leader_location service
@@ -49,14 +62,28 @@ class LeaderNavigationDemoInterface(Node):
 
         self.get_logger().info("Leader navigation demo started")
 
-        
+
+    # Added - Carissa
     def trigger_response(self,request,response):
         # x y z ??? TODO need leader's current location in world map
-        current_location = self.create_pose_stamped(x, y, z)
-        self._amcl_pose_pub.publish(current_location) #PoseStamped format
+        # Modified - Don't think you need the pose_stamped version. Tagged for removal
+        #current_location = self.create_pose_stamped(self._position.x, self._position.y, z)
+
+        #PoseStamped format - Hoever according to the instruction it needs to publish the coordinates only.
+        self._amcl_pose_pub.publish(self._position) 
         response.success = True
         response.message = "Server Processed Client Request: Leader Location Trigger"
         return response
+
+    # Added - For the amcl_pose subscription and publisher to work this is the dependency
+    def amcl_pose_callback(self, msg):
+        # poistion includes (x, y, z). Access position.x
+        self._position = msg.pose.pose.position
+        # Not sure whether the orientation and covariance are required
+        orientation = msg.pose.pose.orientation
+        covariance = msg.pose.covariance
+        self.get_logger().info(f"Position: x={self._position.x}, y={self._position.y}")
+
 
     def localize(self):
         """
