@@ -28,9 +28,6 @@ class LeaderNavigationDemoInterface(Node):
         # Initial pose
         self._leader_initial_pose = PoseStamped()
 
-        # Added - current position
-        #self._position = self._leader_initial_pose
-        
         # Task the leader robot should perform
         if self._task_param == "init":
             self.localize()
@@ -41,39 +38,7 @@ class LeaderNavigationDemoInterface(Node):
             self.localize()
             self.follow_waypoints()
 
-        # Added- publisher to amcl_pose topic for trigger request
-        self._amcl_pose_pub = self.create_publisher(
-            PoseWithCovarianceStamped,
-            "leader/follower_amcl_pose",
-            10
-        )
-        # Kept - Required to get accurate location of the leader robot
-        self._amcl_pose_sub = self.create_subscription(
-            PoseWithCovarianceStamped,
-            "leader/amcl_pose",
-            self.amcl_pose_callback,
-            10
-        )
-        # Asynchronous leader_location service
-        #self._leader_location_srv = self.create_service(Trigger, "leader_location", self.trigger_response)
-        #self._amcl_pose_pub.publish(self._position) 
         self.get_logger().info("Leader navigation demo started")
-
-
-    # Added - Carissa
-   # def trigger_response(self,request,response):
-   #     # position.x and position.y
-   #     self._amcl_pose_pub.publish(self._position) 
-   #     response.success = True
-   #     response.message = "Server Processed Client Request: Leader Location Trigger"
-   #     return response
-
-    # Added - For the amcl_pose subscription and publisher to work this is the dependency
-    def amcl_pose_callback(self, msg):
-        self._position = msg #msg.pose.pose.position
-        self.get_logger().info(f"Position: x={self._position}")
-        self._amcl_pose_pub.publish(self._position) 
-
 
     def localize(self):
         """
