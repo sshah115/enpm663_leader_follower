@@ -48,7 +48,7 @@ class LeaderNavigationDemoInterface(Node):
         qos_policy = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             history=HistoryPolicy.KEEP_LAST,
-            depth=10,
+            depth=3,
         )
 
 
@@ -64,7 +64,7 @@ class LeaderNavigationDemoInterface(Node):
             self.localize()
             self.navigate(-0.872918, -7.414840)
         elif self._task_param == "waypoints":
-            
+            #self.localize()
             self.extract_waypoints() # extracts wp lists to self._targets
 
             # --------Shail--------
@@ -143,6 +143,8 @@ class LeaderNavigationDemoInterface(Node):
             "params",
             "waypoints.yaml",
         )
+
+        self.get_logger().info("Leader navigation demo started")
 
         # print(param_file)
         with open(param_file, "r") as f:

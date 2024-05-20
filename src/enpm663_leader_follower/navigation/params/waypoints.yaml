@@ -1,4 +1,4 @@
-your_node_name:
+leader_navigation:
   ros__parameters:
       wp1:
         type: 'battery'
