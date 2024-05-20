@@ -70,7 +70,7 @@ class FollowerNavigationDemoInterface(Node):
             durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
             reliability=QoSReliabilityPolicy.RELIABLE,
             history=QoSHistoryPolicy.KEEP_LAST,
-            depth=1,
+            depth=5,
         )
         # Amcl Subscriber
         self._amcl_pose_sub = self.create_subscription(
@@ -90,17 +90,6 @@ class FollowerNavigationDemoInterface(Node):
         # Broadcaster node
         self._leader_tf_broadcaster = TransformBroadcaster(self)        
 
-        # TODO: dont think a listener is needed since the leader and follower are both in the same world coordinate system. 
-        # so can remove the listener and broadcaster code. 
-        # -------------------
-        # Listener
-        # -------------------
-        # Create a transform buffer and listener
-        #self._tf_buffer = Buffer()
-        #self._tf_listener = TransformListener(self._tf_buffer, self)
-        # Listen to the transform between frames periodically
-        #self._mutex_cbg = MutuallyExclusiveCallbackGroup()
-        #self._listener_timer = self.create_timer(0.5, self._listener_cb, callback_group=self._mutex_cbg)
         self.get_logger().info("Broadcaster/Listener demo started")
 
 
@@ -111,62 +100,18 @@ class FollowerNavigationDemoInterface(Node):
         Msg data is then formatted for input to utilities function pose_info for broadcaster
         """
         # If no parts are detected, return
-        if msg is None:
-            self.get_logger().warn("No parts detected by the camera")
-            return
-        else:
-            self.get_logger().info("Received amcl pose")
-            self.initial_pose_received = True
+        self.get_logger().info("Received amcl pose")
+        self.initial_pose_received = True
 
-            # Format position and orientation for navigation
-            position_list=[msg.pose.pose.position.x, msg.pose.pose.position.y, msg.pose.pose.position.z]
-            orientation_list = Quaternion()
-            orientation_list.x = msg.pose.pose.orientation.x
-            orientation_list.y = msg.pose.pose.orientation.y
-            orientation_list.z = msg.pose.pose.orientation.z
-            orientation_list.w = msg.pose.pose.orientation.w
-            r,p,y = euler_from_quaternion(orientation_list)
-            rpy_list = [r, p, y]
-            self.navigate(float(msg.pose.pose.position.x), float(msg.pose.pose.position.y))
+        # Format position and orientation for navigation
+        orientation_list = Quaternion()
+        orientation_list.x = msg.pose.pose.orientation.x
+        orientation_list.y = msg.pose.pose.orientation.y
+        orientation_list.z = msg.pose.pose.orientation.z
+        orientation_list.w = msg.pose.pose.orientation.w
+        
+        self.navigate(float(msg.pose.pose.position.x), float(msg.pose.pose.position.y))
 
-            # Send tf transforms 
-            #self.broadcast(
-            #    self._part_parent_frame, self._part_frame, pose=pose_info(position_list,rpy_list)
-            #)
-
-        return
-
-    def broadcast(self, parent, child, pose):
-        """
-        Build a transform message and broadcast it.
-
-        Args:
-            parent (str): Parent frame.
-            child (str): Child frame.
-            pose (geometry_msgs.msg.Pose): Pose of the child frame with respect to the parent frame.
-
-        """
-        transform_stamped = TransformStamped()
-        transform_stamped.header.stamp = self.get_clock().now().to_msg()
-        transform_stamped.header.frame_id = parent
-        transform_stamped.child_frame_id = child
-
-        transform_stamped.transform.translation.x = pose.position.x
-        transform_stamped.transform.translation.y = pose.position.y
-        transform_stamped.transform.translation.z = pose.position.z
-        transform_stamped.transform.rotation.x = pose.orientation.x
-        transform_stamped.transform.rotation.y = pose.orientation.y
-        transform_stamped.transform.rotation.z = pose.orientation.z
-        transform_stamped.transform.rotation.w = pose.orientation.w
-
-        output = "\n"
-        output += "=" * 50 + "\n"
-        output += f"Broadcasting transform between {parent} and {child}\n"
-        output += f"Translation: x: {pose.position.x}, y: {pose.position.y}, z: {pose.position.z}\n"
-        output += "=" * 50 + "\n"
-        self.get_logger().info(Color.CYAN + output + Color.END)
-
-        self._leader_tf_broadcaster.sendTransform(transform_stamped)
 
     def _listener_cb(self):
         """

@@ -4,12 +4,15 @@
   <name>navigation</name>
   <version>0.0.0</version>
   <description>TODO: Package description</description>
-  <maintainer email="zeidk@umd.edu">zeid</maintainer>
+  <maintainer email="yasin@umd.edu">sajjad</maintainer>
+  <maintainer email="carillo@umd.edu">carissa</maintainer>
+  <maintainer email="sshah115@umd.edu">shail</maintainer>
   <license>TODO: License declaration</license>
 
   <depend>rclpy</depend>
   <depend>geometry_msgs</depend>
   <depend>nav2_simple_commander</depend>
+  <depend>orocos_kdl</depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

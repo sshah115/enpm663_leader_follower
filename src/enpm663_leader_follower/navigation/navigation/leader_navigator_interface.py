@@ -6,9 +6,6 @@ from rclpy.node import Node
 import tf_transformations
 from std_srvs.srv import Trigger 
  
-
-# --------Shail--------
-# Additional modules
 import os
 from ament_index_python.packages import get_package_share_directory
 import yaml
@@ -18,7 +15,7 @@ import PyKDL
 from mage_msgs.msg import AdvancedLogicalCameraImage, Part
 from rclpy.callback_groups import ReentrantCallbackGroup, MutuallyExclusiveCallbackGroup
 import copy
-# --------end--------
+
 
 class LeaderNavigationDemoInterface(Node):
     """
@@ -48,11 +45,9 @@ class LeaderNavigationDemoInterface(Node):
         qos_policy = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             history=HistoryPolicy.KEEP_LAST,
-            depth=3,
+            depth=5,
         )
 
-
-        # Added - Clarify purpose?
         self.itr = 0
         self.get_logger().info(f"Temp:")
         
@@ -119,7 +114,8 @@ class LeaderNavigationDemoInterface(Node):
                 )
                 self.localize() ### Why we are localizing the robot here
 
-        # subscriber to amcl_pose topic in a different ROS_DOMAIN_ID
+        # The following commented block was added for the location server, but removed becuase as per latest implementation it is redundant
+        # Subscribe to amcl_pose to extract leaders location
         # self._amcl_pose_sub = self.create_subscription(
         #     PoseStamped,
         #     "/amcl_pose",
@@ -127,10 +123,32 @@ class LeaderNavigationDemoInterface(Node):
         #     10
         # )
 
-        self.get_logger().info("Leader navigation demo started")     
+        # Publisher for the leader location request
+        # self.amcl_pose_pub = self.create_publisher(
+        #     PoseStamped,
+        #     "/leader_coordinates",
+        #     5
+        # )
+
+        # self._leader_location_service = self.create_service(Trigger, "leader_location", self.trigger_response)
 
 
-    #Added 
+        self.get_logger().info("Leader navigation demo started")
+
+    
+    # Note - The following block was added for the server
+    # def trigger_response(self, request, response):
+    #     self._amcl_pose_pub.publis(self._position)
+    #     response.success = True
+    #     response.message = "Server processed client request: Leader location request triggered"
+    #     return response
+
+    # def amcl_pose_callback(self, msg):
+    #     self._position.x = msg.pose.pose.position.x
+    #     self._position.y = msg.pose.pose.position.y
+    #     self.get_logger().info(f"Position: x={self._position.x}, y={self._position.y}")
+    
+
     def extract_waypoints(self):
         """
         Function to extract waypoints from parameter file
@@ -146,14 +164,12 @@ class LeaderNavigationDemoInterface(Node):
 
         self.get_logger().info("Leader navigation demo started")
 
-        # print(param_file)
         with open(param_file, "r") as f:
             coordinates = yaml.safe_load(f)
             targets = coordinates["leader_navigation"]["ros__parameters"]
-        self._targets = targets # Includes all 5 wp's as list
+        self._targets = targets 
         self.get_logger().info(f"Waypoints: {self._targets}")
 
-    #Added
     def _camera_callback(self, msg, camera_id):
         """
         Camera Callback is used to scan cameras and store data
@@ -197,11 +213,9 @@ class LeaderNavigationDemoInterface(Node):
                 temp = self._camera_dict
                 self._camera_dict.clear()
                 self._camera_dict = temp
-                # self.get_logger().info(f"temp: {temp}")
                 self.follow_waypoints()
             
 
-    #Added
     def _multiply_pose(self, pose1: Pose, pose2: Pose) -> Pose:
         """
         Use KDL to multiply two poses together.
@@ -236,13 +250,6 @@ class LeaderNavigationDemoInterface(Node):
         pose.position.y = frame3.p.y()
         pose.position.z = frame3.p.z()
 
-        # Getting Roll, Pitch, and Yaw from the rotation matrix
-        # q = frame3.M.GetRPY()
-        # pose.orientation.x = q[0]
-        # pose.orientation.y = q[1]
-        # pose.orientation.z = q[2]
-        # pose.orientation.w = 0.0
-
         # Get Quaternion
         q = frame3.M.GetQuaternion()
         pose.orientation.x = q[0]
@@ -252,7 +259,6 @@ class LeaderNavigationDemoInterface(Node):
 
         return pose
 
-    #Added 
     def create_waypoint_list(self):
         waypoints = []
         for key in sorted(self._targets.keys()):
@@ -265,7 +271,6 @@ class LeaderNavigationDemoInterface(Node):
                 waypoints.append(world_pose)
         return waypoints
 
-    #Added
     def find_part_pose_in_world(self, color, part_type):  
         # Use the constants defined in Part message for comparison
         color_value = getattr(Part, color.upper(), None)
@@ -283,7 +288,6 @@ class LeaderNavigationDemoInterface(Node):
                     return self.create_pose_stamped_from_pose(part_info["pose"])
         return None
 
-    #Added
     def create_pose_stamped_from_pose(self, pose):
         pose_stamped = PoseStamped()
         pose_stamped.header.frame_id = "map"
@@ -345,7 +349,7 @@ class LeaderNavigationDemoInterface(Node):
 
         while not self._leader_navigator.isTaskComplete():
             feedback = self._leader_navigator.getFeedback()
-            #self.get_logger().info(f"Feedback: {feedback}")
+            self.get_logger().info(f"Feedback: {feedback}")
 
         result = self._leader_navigator.getResult()
         if result == TaskResult.SUCCEEDED:
@@ -374,8 +378,6 @@ class LeaderNavigationDemoInterface(Node):
         goal.pose.orientation.w = q_w
 
         return goal
-
-
 
 
 def main(args=None):
